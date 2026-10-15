@@ -52,7 +52,7 @@ sudo locale-gen zh_CN.UTF-8
 #### 下载：
 
 ```sh
-git clone https://github.com/YongbaoOS/linux_runtime.git
+git clone https://github.com/YongbaoOS/Linux_Runtime.git
 ```
 
 #### 构建：
