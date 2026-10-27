@@ -24,7 +24,10 @@ WORKDIR /src
 COPY . .
 # COPY ./download_packages-cache ./main/downloads
 RUN mkdir -p ./main/downloads \
-    && mv -v ./download_packages-cache/* ./main/downloads/
+    && if [ -d download_packages-cache ]; then \
+           mkdir -p ./download_packages-cache/foo \
+           mv -v ./download_packages-cache/* ./main/downloads/ ; \
+       fi
 
 RUN chmod +x ./main/build.sh \
     && cd ./main \
