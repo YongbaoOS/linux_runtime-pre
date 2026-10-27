@@ -1,12 +1,17 @@
-# syntax=docker/dockerfile:1.9
+# # syntax=docker/dockerfile:1.9
 
-ARG BASE_IMAGE=ubuntu:26.04
+ARG BASE_IMAGE=ubuntu:22.04
 
 # ============================================================
 # Stage 1: host-tools 构建阶段
 # 执行 ./build.sh host-tools，生成通用软件包组
 # ============================================================
 FROM ${BASE_IMAGE} AS host-tools
+
+SHELL ["/bin/bash", "-c"]
+
+ARG ARCH=main
+ARG TARGETARCH
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -36,11 +41,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /src
 COPY . .
-RUN mkdir -p ./main/downloads ./main/workbase \
-    && mkdir -p ./host-tools-cache/host-tools ./host-tools-cache/status \
-    && mv ./download_packages-cache/* ./main/downloads/ \
-    && mv ./host-tools-cache/host-tools ./main/workbase/ \
-    && mv ./host-tools-cache/status ./main/workbase/
+
+RUN mkdir -p ./${ARCH}/workbase/status/host-tools \
+    ./${ARCH}/workbase/notice/host-tools \
+    ./${ARCH}/workbase/host-tools \
+    ./${ARCH}/workbase/common_files \
+    ./${ARCH}/downloads
+
+RUN mv ./download_packages-cache/* ./${ARCH}/downloads/
+
+RUN if [ -f ./host-tools-cache/host-tools.tar.gz ]; then \
+       tar xf ./host-tools-cache/host-tools.tar.gz -C . ; \
+    fi
 
 RUN chmod +x ./main/build.sh \
     && cd ./main \
@@ -48,13 +60,9 @@ RUN chmod +x ./main/build.sh \
     && ./build.sh -l host-tools
 
 # host-tools 产物统一收集到 /output/host-tools
-# RUN mkdir -p /output/host-tools /output/status/{host-tools,bootstrap} \
-RUN mkdir -p /output/host-tools/status/host-tools /output/host-tools/host-tools \
-    && cp -a ./main/workbase/host-tools/. /output/host-tools/host-tools/ \
-    && cp -a ./main/workbase/status/host-tools/. /output/host-tools/status/host-tools/
-
-#     && cp -a ./main/workbase/status/bootstrap/. /output/status/bootstrap/
-
+RUN mkdir -p /output/host-tools \
+    && tar -czf /output/host-tools/host-tools.tar.gz ./${ARCH}/workbase/host-tools ./${ARCH}/workbase/status/{host-tools,bootstrap} \
+        ./${ARCH}/workbase/common_files ./${ARCH}/workbase/notice/host-tools
 
 FROM scratch AS host-tools-builder
 COPY --from=host-tools /output/host-tools/. /
