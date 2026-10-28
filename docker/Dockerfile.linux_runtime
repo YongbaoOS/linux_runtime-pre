@@ -1,13 +1,19 @@
 # syntax=docker/dockerfile:1-labs
 
-ARG BASE_IMAGE=ubuntu:26.04
+ARG BASE_IMAGE=ubuntu:22.04
 
 # ============================================================
 # Stage 2: linux runtime 构建阶段
 # 执行 ./build.sh ，生成目标架构的runtime
 # ============================================================
 FROM ${BASE_IMAGE} AS linux_runtime
-ARG ARCH=x86_64
+
+SHELL ["/bin/bash", "-c"]
+
+ARG ARCH=main
+ARG TARGETARCH
+
+ARG BUILD_ARCH=x86_64
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -45,36 +51,64 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /src
 COPY . .
-RUN mkdir -pv ./host-tools-cache/host-tools ./host-tools-cache/status \
-    ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./linux_runtime_${ARCH}-cache/cross-toolchains \
-    ./linux_runtime_${ARCH}-cache/status ./linux_runtime_${ARCH}-cache/common_files \
-    ./linux_runtime_${ARCH}-cache/notice/cross-toolchains ./linux_runtime_${ARCH}-cache/notice/linux_runtime \
-    && mkdir -p ./main/downloads ./main/workbase/overlaydir \
-    ./main/workbase/status/ ./main/workbase/common_files \
-    ./main/workbase/notice/cross-toolchains ./main/workbase/notice/linux_runtime \
-    && mv ./download_packages-cache/* ./main/downloads/ \
-    && mv ./host-tools-cache/host-tools ./main/workbase/ \
-    && cp -a ./host-tools-cache/status/. ./main/workbase/status/ \
-    && mv ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./main/workbase/overlaydir/ \
-    && mv ./linux_runtime_${ARCH}-cache/cross-toolchains ./main/workbase/ \
-    && cp -a ./linux_runtime_${ARCH}-cache/status/. ./main/workbase/status/ \
-    && cp -a ./linux_runtime_${ARCH}-cache/common_files/. ./main/workbase/common_files/ \
-    && cp -a ./linux_runtime_${ARCH}-cache/notice/cross-toolchains/. ./main/workbase/notice/cross-toolchains/ \
-    && cp -a ./linux_runtime_${ARCH}-cache/notice/linux_runtime/. ./main/workbase/notice/linux_runtime/
+
+RUN mkdir -p ./${ARCH}/downloads
+RUN mv ./download_packages-cache/* ./${ARCH}/downloads/
+
+RUN mkdir -p ./${ARCH}/workbase/status/host-tools \
+    ./${ARCH}/workbase/notice/host-tools \
+    ./${ARCH}/workbase/host-tools \
+    ./${ARCH}/workbase/common_files \
+    ./${ARCH}/downloads
+RUN if [ -f ./host-tools-cache/host-tools.tar.gz ]; then \
+       tar xf ./host-tools-cache/host-tools.tar.gz -C . ; \
+    fi
+
+RUN mkdir -p ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
+    ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
+    ./${ARCH}/workbase/cross-toolchains
+    ./${ARCH}/workbase/overlaydir
+RUN if [ -f ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz ]; then \
+       tar xf ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz -C . ; \
+    fi
+
+
+# RUN mkdir -pv ./host-tools-cache/host-tools ./host-tools-cache/status \
+#     ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./linux_runtime_${ARCH}-cache/cross-toolchains \
+#     ./linux_runtime_${ARCH}-cache/status ./linux_runtime_${ARCH}-cache/common_files \
+#     ./linux_runtime_${ARCH}-cache/notice/cross-toolchains ./linux_runtime_${ARCH}-cache/notice/linux_runtime \
+#     && mkdir -p ./main/downloads ./main/workbase/overlaydir \
+#     ./main/workbase/status/ ./main/workbase/common_files \
+#     ./main/workbase/notice/cross-toolchains ./main/workbase/notice/linux_runtime \
+#     && mv ./download_packages-cache/* ./main/downloads/ \
+#     && mv ./host-tools-cache/host-tools ./main/workbase/ \
+#     && cp -a ./host-tools-cache/status/. ./main/workbase/status/ \
+#     && mv ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./main/workbase/overlaydir/ \
+#     && mv ./linux_runtime_${ARCH}-cache/cross-toolchains ./main/workbase/ \
+#     && cp -a ./linux_runtime_${ARCH}-cache/status/. ./main/workbase/status/ \
+#     && cp -a ./linux_runtime_${ARCH}-cache/common_files/. ./main/workbase/common_files/ \
+#     && cp -a ./linux_runtime_${ARCH}-cache/notice/cross-toolchains/. ./main/workbase/notice/cross-toolchains/ \
+#     && cp -a ./linux_runtime_${ARCH}-cache/notice/linux_runtime/. ./main/workbase/notice/linux_runtime/
 
 RUN --security=insecure chmod +x ./main/build.sh \
     && cd ./main \
-    && ./build.sh -l -B 100 -e target=${ARCH} -S ${ARCH}_runtime
+    && ./build.sh -l -B 100 -e target=${BUILD_ARCH} -S ${BUILD_ARCH}_runtime
 
 # linux runtime 产物统一收集到 /output/linux_runtime
-RUN mkdir -p /output/linux_runtime/status/ /output/linux_runtime/notice/ \
-    && cp -a ./main/workbase/overlaydir/${ARCH}_runtime /output/linux_runtime/ \
-    && cp -a ./main/workbase/cross-toolchains /output/linux_runtime/ \
-    && cp -a ./main/workbase/status/linux_runtime /output/linux_runtime/status/ \
-    && cp -a ./main/workbase/status/cross-toolchains /output/linux_runtime/status/ \
-    && cp -a ./main/workbase/common_files /output/linux_runtime/ \
-    && cp -a ./main/workbase/notice/cross-toolchains /output/linux_runtime/notice/ \
-    && cp -a ./main/workbase/notice/linux_runtime /output/linux_runtime/notice/
+RUN mkdir -p /output/linux_runtime
+&& tar -czf /output/linux_runtime/${BUILD_ARCH}_runtime.tar.gz ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
+        ./${ARCH}/workbase/common_files ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
+        ./${ARCH}/workbase/cross-toolchains \
+        ./${ARCH}/workbase/overlaydir/${BUILD_ARCH}_runtime
+
+# RUN mkdir -p /output/linux_runtime/status/ /output/linux_runtime/notice/ \
+#     && cp -a ./main/workbase/overlaydir/${ARCH}_runtime /output/linux_runtime/ \
+#     && cp -a ./main/workbase/cross-toolchains /output/linux_runtime/ \
+#     && cp -a ./main/workbase/status/linux_runtime /output/linux_runtime/status/ \
+#     && cp -a ./main/workbase/status/cross-toolchains /output/linux_runtime/status/ \
+#     && cp -a ./main/workbase/common_files /output/linux_runtime/ \
+#     && cp -a ./main/workbase/notice/cross-toolchains /output/linux_runtime/notice/ \
+#     && cp -a ./main/workbase/notice/linux_runtime /output/linux_runtime/notice/
 
 FROM scratch AS linux_runtime-builder
 COPY --from=linux_runtime /output/linux_runtime/. /
