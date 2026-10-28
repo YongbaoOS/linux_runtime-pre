@@ -95,7 +95,7 @@ RUN --security=insecure chmod +x ./main/build.sh \
     && ./build.sh -l -B 100 -e target=${BUILD_ARCH} -S ${BUILD_ARCH}_runtime
 
 # linux runtime 产物统一收集到 /output/linux_runtime
-RUN mkdir -p /output/linux_runtime
+RUN mkdir -p /output/linux_runtime \
 && tar -czf /output/linux_runtime/${BUILD_ARCH}_runtime.tar.gz ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
         ./${ARCH}/workbase/common_files ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
         ./${ARCH}/workbase/cross-toolchains \
