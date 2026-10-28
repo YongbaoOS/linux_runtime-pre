@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         wget \
         python3 \
+        shared-mime-info \
         pkg-config \
         && locale-gen zh_CN.UTF-8 \
         && rm -rf /var/lib/apt/lists/*
@@ -53,20 +54,20 @@ WORKDIR /src
 COPY . .
 
 RUN mkdir -p ./${ARCH}/downloads
+
 RUN mv ./download_packages-cache/* ./${ARCH}/downloads/
 
 RUN mkdir -p ./${ARCH}/workbase/status/host-tools \
     ./${ARCH}/workbase/notice/host-tools \
     ./${ARCH}/workbase/host-tools \
-    ./${ARCH}/workbase/common_files \
-    ./${ARCH}/downloads
+    ./${ARCH}/workbase/common_files
 RUN if [ -f ./host-tools-cache/host-tools.tar.gz ]; then \
        tar xf ./host-tools-cache/host-tools.tar.gz -C . ; \
     fi
 
 RUN mkdir -p ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
     ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
-    ./${ARCH}/workbase/cross-toolchains
+    ./${ARCH}/workbase/cross-toolchains \
     ./${ARCH}/workbase/overlaydir
 RUN if [ -f ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz ]; then \
        tar xf ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz -C . ; \
@@ -95,7 +96,7 @@ RUN --security=insecure chmod +x ./main/build.sh \
     && ./build.sh -l -B 100 -e target=${BUILD_ARCH} -S ${BUILD_ARCH}_runtime
 
 # linux runtime 产物统一收集到 /output/linux_runtime
-RUN mkdir -p /output/linux_runtime
+RUN mkdir -p /output/linux_runtime \
 && tar -czf /output/linux_runtime/${BUILD_ARCH}_runtime.tar.gz ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
         ./${ARCH}/workbase/common_files ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
         ./${ARCH}/workbase/cross-toolchains \
