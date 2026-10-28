@@ -53,13 +53,13 @@ WORKDIR /src
 COPY . .
 
 RUN mkdir -p ./${ARCH}/downloads
+
 RUN mv ./download_packages-cache/* ./${ARCH}/downloads/
 
 RUN mkdir -p ./${ARCH}/workbase/status/host-tools \
     ./${ARCH}/workbase/notice/host-tools \
     ./${ARCH}/workbase/host-tools \
-    ./${ARCH}/workbase/common_files \
-    ./${ARCH}/downloads
+    ./${ARCH}/workbase/common_files
 RUN if [ -f ./host-tools-cache/host-tools.tar.gz ]; then \
        tar xf ./host-tools-cache/host-tools.tar.gz -C . ; \
     fi
