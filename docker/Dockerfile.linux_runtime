@@ -66,7 +66,7 @@ RUN if [ -f ./host-tools-cache/host-tools.tar.gz ]; then \
 
 RUN mkdir -p ./${ARCH}/workbase/status/{cross-toolchains,linux_runtime} \
     ./${ARCH}/workbase/notice/{cross-toolchains,linux_runtime} \
-    ./${ARCH}/workbase/cross-toolchains
+    ./${ARCH}/workbase/cross-toolchains \
     ./${ARCH}/workbase/overlaydir
 RUN if [ -f ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz ]; then \
        tar xf ./linux_runtime_${BUILD_ARCH}-cache/${BUILD_ARCH}_runtime.tar.gz -C . ; \
