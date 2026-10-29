@@ -11,7 +11,7 @@ tar xvf ${DOWNLOADDIR}/gdk-pixbuf-2.44.7.tar.xz -C ${BUILD_DIRECTORY}
 pushd ${BUILD_DIRECTORY}/gdk-pixbuf-2.44.7
     mkdir cross-build
     pushd cross-build
-        meson ${MESON_CONFIG} --wrap-mode=nofallback -Dman=false -Ddocumentation=false -Dglycin=disabled ..
+        meson ${MESON_CONFIG} --wrap-mode=nofallback -Dman=false -Ddocumentation=false -Dglycin=disabled -Dpng=enabled ..
         eval ${NINJA_AND_INSTALL}
     popd
 
