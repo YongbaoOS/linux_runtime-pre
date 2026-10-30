@@ -231,7 +231,6 @@
 %step/linux_runtime/gdk-pixbuf|%target=?x86_64;%OVERLAY=linux_runtime
 %step/linux_runtime/libepoxy|%target=?x86_64;%OVERLAY=linux_runtime
 %step/linux_runtime/libXdamage|%target=?x86_64;%OVERLAY=linux_runtime
-%step/linux_runtime/gtk2|%target=?x86_64;%OVERLAY=linux_runtime
 %step/linux_runtime/gtk3|%target=?x86_64;%OVERLAY=linux_runtime
 %step/linux_runtime/gstreamer|%target=?x86_64;%OVERLAY=linux_runtime
 %step/linux_runtime/opus|%target=?x86_64;%OVERLAY=linux_runtime
